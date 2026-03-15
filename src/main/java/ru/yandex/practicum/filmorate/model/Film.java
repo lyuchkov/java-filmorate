@@ -1,12 +1,27 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import ru.yandex.practicum.filmorate.model.validation.DateOnlyAfter;
 
-/**
- * Film.
- */
-@Getter
-@Setter
+import java.util.Date;
+
+@Data
 public class Film {
+    long id;
+
+    @NotBlank
+    String name;
+
+    @Size(max = 200, message = "Film description length should be less than 200")
+    String description;
+
+    @DateOnlyAfter(value = "1895-12-28")
+    Date releaseDate;
+
+    @Positive
+    long duration;
+
 }
