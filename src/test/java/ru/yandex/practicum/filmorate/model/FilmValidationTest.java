@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +36,8 @@ public class FilmValidationTest {
     void shouldPassValidationWhenFilmIsValid() {
         Film film = createValidFilm();
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
     }
 
@@ -44,7 +46,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setName("   ");
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(1, violations.size());
     }
 
@@ -53,7 +57,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setDescription("a".repeat(200));
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
     }
 
@@ -62,7 +68,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setDescription("a".repeat(201));
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(1, violations.size());
     }
 
@@ -71,7 +79,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setReleaseDate(createDate(1895, 12, 29));
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
     }
 
@@ -80,7 +90,8 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setReleaseDate(createDate(1895, 12, 28));
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(0, violations.size());
     }
 
@@ -89,7 +100,8 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setReleaseDate(createDate(1895, 12, 27));
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(1, violations.size());
     }
 
@@ -98,7 +110,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setDuration(1);
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertTrue(violations.isEmpty());
     }
 
@@ -107,7 +121,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setDuration(0);
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(1, violations.size());
     }
 
@@ -116,7 +132,9 @@ public class FilmValidationTest {
         Film film = createValidFilm();
         film.setDuration(-1);
 
-        Set<ConstraintViolation<Film>> violations = factory.getValidator().validate(film);
+        
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<Film>> violations = validator.validate(film);
         assertEquals(1, violations.size());
     }
 }

@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,8 @@ public class UserValidationTest {
     void shouldPassValidationWhenUserIsValid() {
         User user = createValidUser();
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertTrue(violations.isEmpty());
     }
 
@@ -38,7 +40,8 @@ public class UserValidationTest {
         User user = createValidUser();
         user.setEmail("invalid-email");
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertEquals(1, violations.size());
     }
 
@@ -47,7 +50,8 @@ public class UserValidationTest {
         User user = createValidUser();
         user.setLogin("invalid login");
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertEquals(1, violations.size());
     }
 
@@ -56,7 +60,8 @@ public class UserValidationTest {
         User user = createValidUser();
         user.setLogin("   ");
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertEquals(2, violations.size());
     }
 
@@ -65,7 +70,8 @@ public class UserValidationTest {
         User user = createValidUser();
         user.setBirthday(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)));
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertEquals(1, violations.size());
     }
 
@@ -74,7 +80,8 @@ public class UserValidationTest {
         User user = createValidUser();
         user.setBirthday(Date.from(Instant.now().plusMillis(5000)));
 
-        Set<ConstraintViolation<User>> violations =  factory.getValidator().validate(user);
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<User>> violations = validator.validate(user);
         assertEquals(1, violations.size());
     }
 }
