@@ -18,8 +18,8 @@ public class FilmValidationTest {
 
     private final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 
-    private Date createDate(int year, int month, int day) {
-        return Date.from(LocalDate.of(year, month, day).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private LocalDate createDate(int year, int month, int day) {
+        return LocalDate.of(year, month, day);
     }
 
     private Film createValidFilm() {

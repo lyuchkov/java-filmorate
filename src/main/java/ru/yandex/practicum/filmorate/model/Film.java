@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.model.validation.DateOnlyAfter;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Data
@@ -19,7 +20,7 @@ public class Film {
     String description;
 
     @DateOnlyAfter(value = "1895-12-28")
-    Date releaseDate;
+    LocalDate releaseDate;
 
     @Positive
     long duration;
