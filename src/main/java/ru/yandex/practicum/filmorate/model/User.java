@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 public class User {
@@ -24,5 +24,5 @@ public class User {
     String name;
 
     @Past
-    Date birthday;
+    LocalDate birthday;
 }

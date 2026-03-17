@@ -6,9 +6,7 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +20,7 @@ public class UserValidationTest {
         User user = new User();
         user.setEmail("test@example.com");
         user.setLogin("validLogin");
-        user.setBirthday(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+        user.setBirthday(LocalDate.of(2026, 1, 1));
         return user;
     }
 
@@ -68,7 +66,7 @@ public class UserValidationTest {
     @Test
     void shouldFailWhenBirthdayIsInFuture() {
         User user = createValidUser();
-        user.setBirthday(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)));
+        user.setBirthday(LocalDate.of(2116, 1, 1));
 
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
@@ -78,7 +76,7 @@ public class UserValidationTest {
     @Test
     void shouldFailWhenBirthdayIsNow() {
         User user = createValidUser();
-        user.setBirthday(Date.from(Instant.now().plusMillis(5000)));
+        user.setBirthday(LocalDate.now());
 
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<User>> violations = validator.validate(user);
