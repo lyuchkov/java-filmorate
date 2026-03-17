@@ -90,7 +90,7 @@ public class FilmValidationTest {
 
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<Film>> violations = validator.validate(film);
-        assertEquals(0, violations.size());
+        assertEquals(1, violations.size());
     }
 
     @Test
