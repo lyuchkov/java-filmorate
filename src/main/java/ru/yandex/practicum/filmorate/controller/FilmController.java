@@ -18,16 +18,19 @@ public class FilmController {
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
+        log.info("Creating new film: {}", film.getName());
         return filmService.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
+        log.info("Updating film with id: {}", film.getId());
         return filmService.updateFilm(film);
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
+        log.info("Fetching all films");
         return filmService.getAllFilms();
     }
 }

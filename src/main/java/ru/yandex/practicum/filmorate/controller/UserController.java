@@ -18,16 +18,19 @@ public class UserController {
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
+        log.info("Creating user with email: {}", user.getEmail());
         return userService.createUser(user);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
+        log.info("Updating user with id: {}", user.getId());
         return userService.updateUser(user);
     }
 
     @GetMapping
     public List<User> getAllUsers() {
+        log.info("Fetching all users");
         return userService.getAllUsers();
     }
 }

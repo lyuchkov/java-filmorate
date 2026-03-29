@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ public class InMemoryFilmServiceImpl implements FilmService {
     @Override
     public Film updateFilm(Film film) {
         if (!filmMap.containsKey(film.getId())) {
-            throw new RuntimeException("Film not found");
+            throw new FilmNotFoundException(film.getId());
         }
         filmMap.put(film.getId(), film);
         return film;
