@@ -33,7 +33,7 @@ public class InMemoryUserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(Long id){
+    public User getUserById(Long id) {
         return userStorage.getUserById(id);
     }
 
@@ -43,7 +43,7 @@ public class InMemoryUserServiceImpl implements UserService {
         User friend = userStorage.getUserById(friendId);
 
         user.getFriends().add(friendId);
-        friend.getFriends().add(userId); // Взаимность по условию
+        friend.getFriends().add(userId);
     }
 
     @Override

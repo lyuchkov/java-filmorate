@@ -35,7 +35,7 @@ public class InMemoryFilmServiceImpl implements FilmService {
     @Override
     public void addLike(Long filmId, Long userId) {
         Film film = filmStorage.getFilmById(filmId);
-        userStorage.getUserById(userId); // Проверка, что юзер существует
+        userStorage.getUserById(userId);
         film.getLikes().add(userId);
     }
 
