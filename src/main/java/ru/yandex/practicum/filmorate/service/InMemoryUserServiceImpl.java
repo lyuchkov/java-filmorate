@@ -1,48 +1,79 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserNotFoundException;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class InMemoryUserServiceImpl implements UserService {
-    private final Map<Long, User> userMap = new HashMap<>();
-    private long idCounter = 1;
+    private final InMemoryUserStorage userStorage;
 
     @Override
     public User createUser(User user) {
-        setUsername(user);
-        user.setId(idCounter++);
-        userMap.put(user.getId(), user);
-        return user;
+        return userStorage.createUser(user);
     }
 
     @Override
     public User updateUser(User user) {
-        if (!userMap.containsKey(user.getId())) {
-            throw new UserNotFoundException(user.getId());
-        }
-        setUsername(user);
-        userMap.put(user.getId(), user);
-        return user;
+        return userStorage.updateUser(user);
     }
 
     @Override
     public List<User> getAllUsers() {
-        return new ArrayList<>(userMap.values());
+        return userStorage.getAllUsers();
     }
 
-
-    private static void setUsername(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+    @Override
+    public User getUserById(Long id){
+        return userStorage.getUserById(id);
     }
+
+    @Override
+    public void addFriend(Long userId, Long friendId) {
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId); // Взаимность по условию
+    }
+
+    @Override
+    public void deleteFriend(Long userId, Long friendId) {
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+    }
+
+    @Override
+    public List<User> getFriends(Long userId) {
+        User user = userStorage.getUserById(userId);
+        return user.getFriends().stream()
+                .map(userStorage::getUserById)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long userId, Long otherId) {
+        User user = userStorage.getUserById(userId);
+        User other = userStorage.getUserById(otherId);
+
+        Set<Long> intersect = new HashSet<>(user.getFriends());
+        intersect.retainAll(other.getFriends());
+
+        return intersect.stream()
+                .map(userStorage::getUserById)
+                .collect(Collectors.toList());
+    }
+
 }
