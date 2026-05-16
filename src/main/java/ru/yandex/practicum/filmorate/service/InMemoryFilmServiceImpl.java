@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserNotFoundException;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -68,16 +69,16 @@ public class InMemoryFilmServiceImpl implements FilmService {
 
         Film film = getFilmById(filmId);
 
-        User user = userStorage.getUserById(userId)
-                .orElseThrow(() -> getNoSuchElementException(userId));
+        userStorage.getUserById(userId)
+                .orElseThrow(() -> getUserNotFoundException(userId));
 
         film.getLikes().add(userId);
         log.info("Successfully added like from userId={} to filmId={}", userId, filmId);
     }
 
-    private static NoSuchElementException getNoSuchElementException(Long userId) {
+    private static UserNotFoundException getUserNotFoundException(Long userId) {
         log.error("User not found with ID: {}", userId);
-        return new NoSuchElementException("User with id " + userId + " not found");
+        return new UserNotFoundException(userId);
     }
 
     @Override
@@ -87,7 +88,7 @@ public class InMemoryFilmServiceImpl implements FilmService {
         Film film = getFilmById(filmId);
 
         userStorage.getUserById(userId)
-                .orElseThrow(() -> getNoSuchElementException(userId));
+                .orElseThrow(() -> getUserNotFoundException(userId));
 
         film.getLikes().remove(userId);
         log.info("Successfully removed like from userId={} for filmId={}", userId, filmId);
