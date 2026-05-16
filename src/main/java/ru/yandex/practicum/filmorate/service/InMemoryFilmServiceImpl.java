@@ -35,7 +35,7 @@ public class InMemoryFilmServiceImpl implements FilmService {
         filmStorage.getFilmById(film.getId())
                 .orElseThrow(() -> {
                     log.error("Cannot update film. Film not found with ID: {}", film.getId());
-                    return new FilmNotFoundException( film.getId());
+                    return new FilmNotFoundException(film.getId());
                 });
 
         Film updatedFilm = filmStorage.updateFilm(film);
