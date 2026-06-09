@@ -1,39 +1,109 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.model.UserNotFoundException;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class InMemoryFilmServiceImpl implements FilmService {
-    private final Map<Long, Film> filmMap = new HashMap<>();
-    private long idCounter = 1;
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     @Override
     public Film addFilm(Film film) {
-        film.setId(idCounter++);
-        filmMap.put(film.getId(), film);
-        return film;
+        log.info("Processing addFilm request: {}", film);
+        Film createdFilm = filmStorage.addFilm(film);
+        log.info("Successfully created film with ID: {}", createdFilm.getId());
+        return createdFilm;
     }
 
     @Override
     public Film updateFilm(Film film) {
-        if (!filmMap.containsKey(film.getId())) {
-            throw new FilmNotFoundException(film.getId());
-        }
-        filmMap.put(film.getId(), film);
-        return film;
+        log.info("Processing updateFilm request for ID: {}", film.getId());
+
+        filmStorage.getFilmById(film.getId())
+                .orElseThrow(() -> {
+                    log.error("Cannot update film. Film not found with ID: {}", film.getId());
+                    return new FilmNotFoundException(film.getId());
+                });
+
+        Film updatedFilm = filmStorage.updateFilm(film);
+        log.info("Successfully updated film with ID: {}", updatedFilm.getId());
+        return updatedFilm;
     }
 
     @Override
     public List<Film> getAllFilms() {
-        return new ArrayList<>(filmMap.values());
+        log.info("Processing getAllFilms request");
+        List<Film> films = filmStorage.getAllFilms();
+        log.debug("Successfully retrieved {} film(s)", films.size());
+        return films;
+    }
+
+    @Override
+    public Film getFilmById(Long id) {
+        log.info("Processing getFilmById request for ID: {}", id);
+
+        return filmStorage.getFilmById(id)
+                .orElseThrow(() -> {
+                    log.error("Film not found with ID: {}", id);
+                    return new ru.yandex.practicum.filmorate.model.FilmNotFoundException(id);
+                });
+    }
+
+    @Override
+    public void addLike(Long filmId, Long userId) {
+        log.info("Processing addLike request: filmId={}, userId={}", filmId, userId);
+
+        Film film = getFilmById(filmId);
+
+        userStorage.getUserById(userId)
+                .orElseThrow(() -> getUserNotFoundException(userId));
+
+        film.getLikes().add(userId);
+        log.info("Successfully added like from userId={} to filmId={}", userId, filmId);
+    }
+
+    private static UserNotFoundException getUserNotFoundException(Long userId) {
+        log.error("User not found with ID: {}", userId);
+        return new UserNotFoundException(userId);
+    }
+
+    @Override
+    public void deleteLike(Long filmId, Long userId) {
+        log.info("Processing deleteLike request: filmId={}, userId={}", filmId, userId);
+
+        Film film = getFilmById(filmId);
+
+        userStorage.getUserById(userId)
+                .orElseThrow(() -> getUserNotFoundException(userId));
+
+        film.getLikes().remove(userId);
+        log.info("Successfully removed like from userId={} for filmId={}", userId, filmId);
+    }
+
+    @Override
+    public List<Film> getPopular(int count) {
+        log.info("Processing getPopular films request with count={}", count);
+
+        if (count <= 0) {
+            log.warn("Validation failed: Count must be greater than zero. Received count={}", count);
+            throw new IllegalArgumentException("Count must be greater than zero. Count: " + count);
+        }
+
+        return filmStorage.getAllFilms().stream()
+                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }
