@@ -1,14 +1,19 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.UserNotFoundException;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,10 +23,14 @@ import java.util.stream.Collectors;
 public class InMemoryFilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
+    private final MpaStorage mpaStorage;
+    private final GenreStorage genreStorage;
 
     @Override
     public Film addFilm(Film film) {
         log.info("Processing addFilm request: {}", film);
+        validateMpa(film);
+        validateGenres(film);
         Film createdFilm = filmStorage.addFilm(film);
         log.info("Successfully created film with ID: {}", createdFilm.getId());
         return createdFilm;
@@ -30,7 +39,8 @@ public class InMemoryFilmServiceImpl implements FilmService {
     @Override
     public Film updateFilm(Film film) {
         log.info("Processing updateFilm request for ID: {}", film.getId());
-
+        validateMpa(film);
+        validateGenres(film);
         filmStorage.getFilmById(film.getId())
                 .orElseThrow(() -> {
                     log.error("Cannot update film. Film not found with ID: {}", film.getId());
@@ -106,4 +116,24 @@ public class InMemoryFilmServiceImpl implements FilmService {
                 .limit(count)
                 .collect(Collectors.toList());
     }
+
+
+    private void validateMpa(Film film) {
+        if (film.getMpa() == null) {
+            log.warn("Film validation failed: MPA is required");
+            throw new ValidationException("MPA is required");
+        }
+        this.mpaStorage.getMpaById(film.getMpa().getId());
+    }
+
+    private void validateGenres(Film film) {
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            Collection<Integer> genreIds = film.getGenres().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toList());
+
+            this.genreStorage.getGenresByIds(genreIds);
+        }
+    }
+
 }
