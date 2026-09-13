@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class InMemoryFilmServiceImpl implements FilmService {
+public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final MpaStorage mpaStorage;
@@ -67,7 +67,7 @@ public class InMemoryFilmServiceImpl implements FilmService {
         return filmStorage.getFilmById(id)
                 .orElseThrow(() -> {
                     log.error("Film not found with ID: {}", id);
-                    return new ru.yandex.practicum.filmorate.model.FilmNotFoundException(id);
+                    return new FilmNotFoundException(id);
                 });
     }
 
@@ -75,30 +75,25 @@ public class InMemoryFilmServiceImpl implements FilmService {
     public void addLike(Long filmId, Long userId) {
         log.info("Processing addLike request: filmId={}, userId={}", filmId, userId);
 
-        Film film = getFilmById(filmId);
+        getFilmById(filmId);
 
         userStorage.getUserById(userId)
                 .orElseThrow(() -> getUserNotFoundException(userId));
 
-        film.getLikes().add(userId);
+        filmStorage.addLike(filmId, userId);
         log.info("Successfully added like from userId={} to filmId={}", userId, filmId);
-    }
-
-    private static UserNotFoundException getUserNotFoundException(Long userId) {
-        log.error("User not found with ID: {}", userId);
-        return new UserNotFoundException(userId);
     }
 
     @Override
     public void deleteLike(Long filmId, Long userId) {
         log.info("Processing deleteLike request: filmId={}, userId={}", filmId, userId);
 
-        Film film = getFilmById(filmId);
+        getFilmById(filmId);
 
         userStorage.getUserById(userId)
                 .orElseThrow(() -> getUserNotFoundException(userId));
 
-        film.getLikes().remove(userId);
+        filmStorage.deleteLike(filmId, userId);
         log.info("Successfully removed like from userId={} for filmId={}", userId, filmId);
     }
 
@@ -111,12 +106,13 @@ public class InMemoryFilmServiceImpl implements FilmService {
             throw new IllegalArgumentException("Count must be greater than zero. Count: " + count);
         }
 
-        return filmStorage.getAllFilms().stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getPopularFilms(count);
     }
 
+    private static UserNotFoundException getUserNotFoundException(Long userId) {
+        log.error("User not found with ID: {}", userId);
+        return new UserNotFoundException(userId);
+    }
 
     private void validateMpa(Film film) {
         if (film.getMpa() == null) {
@@ -135,5 +131,4 @@ public class InMemoryFilmServiceImpl implements FilmService {
             this.genreStorage.getGenresByIds(genreIds);
         }
     }
-
 }

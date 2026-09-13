@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Repository
 @RequiredArgsConstructor
@@ -39,8 +38,20 @@ public class FilmDbStorage implements FilmStorage {
 
     private static final String SELECT_ALL_FILMS_WITH_MPA = SELECT_FILM_WITH_MPA + " ORDER BY f.id";
 
-    private static final String INSERT_FILM_GENRE = "MERGE INTO FILMORATE.film_genres KEY (film_id, genre_id) VALUES (?, ?)";
+    private static final String INSERT_FILM_GENRE = "MERGE INTO FILMORATE.FILM_GENRES KEY (film_id, genre_id) VALUES (?, ?)";
 
+    private static final String INSERT_FILM_LIKE = "MERGE INTO FILMORATE.FILM_LIKES KEY (film_id, user_id) VALUES (?, ?)";
+
+    private static final String DELETE_FILM_LIKE = "DELETE FROM FILMORATE.FILM_LIKES WHERE film_id = ? AND user_id = ?";
+
+    private static final String SELECT_POPULAR_FILMS = "SELECT f.id, f.name, f.description, f.release_date, f.duration, " +
+            "f.mpa_id, m.id as mpa_id_from_join, m.name as mpa_name " +
+            "FROM FILMORATE.FILMS f " +
+            "LEFT JOIN FILMORATE.MPA m ON f.mpa_id = m.id " +
+            "LEFT JOIN FILMORATE.FILM_LIKES fl ON f.id = fl.film_id " +
+            "GROUP BY f.id, m.id, m.name " +
+            "ORDER BY COUNT(fl.user_id) DESC, f.id ASC " +
+            "LIMIT ?";
 
     @Override
     public Film addFilm(Film film) {
@@ -87,11 +98,17 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getAllFilms() {
-        return this.jdbcTemplate.query(SELECT_ALL_FILMS_WITH_MPA, (rs, rowNum) -> {
+        List<Film> films = this.jdbcTemplate.query(SELECT_ALL_FILMS_WITH_MPA, (rs, rowNum) -> {
             Film f = this.filmRowMapper.mapRow(rs, rowNum);
             loadMpaFromResultSet(rs, f);
             return f;
         });
+
+        for (Film film : films) {
+            loadGenresFromResultSet(film);
+        }
+
+        return films;
     }
 
     @Override
@@ -102,6 +119,31 @@ public class FilmDbStorage implements FilmStorage {
             loadGenresFromResultSet(f);
             return f;
         }, id).stream().findFirst();
+    }
+
+    @Override
+    public void addLike(Long filmId, Long userId) {
+        this.jdbcTemplate.update(INSERT_FILM_LIKE, filmId, userId);
+    }
+
+    @Override
+    public void deleteLike(Long filmId, Long userId) {
+        this.jdbcTemplate.update(DELETE_FILM_LIKE, filmId, userId);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        List<Film> films = this.jdbcTemplate.query(SELECT_POPULAR_FILMS, (rs, rowNum) -> {
+            Film f = this.filmRowMapper.mapRow(rs, rowNum);
+            loadMpaFromResultSet(rs, f);
+            return f;
+        }, count);
+
+        for (Film film : films) {
+            loadGenresFromResultSet(film);
+        }
+
+        return films;
     }
 
     private void loadMpaFromResultSet(java.sql.ResultSet rs, Film film) throws java.sql.SQLException {
@@ -119,8 +161,8 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         String sql = "SELECT g.id AS genre_id, g.name AS genre_name " +
-                "FROM filmorate.film_genres fg " +
-                "JOIN filmorate.genres g ON fg.genre_id = g.id " +
+                "FROM FILMORATE.FILM_GENRES fg " +
+                "JOIN FILMORATE.GENRES g ON fg.genre_id = g.id " +
                 "WHERE fg.film_id = ? " +
                 "ORDER BY g.id";
 
