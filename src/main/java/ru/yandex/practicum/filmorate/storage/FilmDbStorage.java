@@ -14,9 +14,7 @@ import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,7 +26,10 @@ public class FilmDbStorage implements FilmStorage {
 
     private static final String INSERT_FILM = "INSERT INTO FILMORATE.FILMS (name, description, release_date, duration, mpa_id) VALUES (?, ?, ?, ?, ?)";
 
-    private static final String SELECT_FILM_WITH_MPA = "SELECT f.id, f.name, f.description, f.release_date, f.duration, " + "f.mpa_id, m.id as mpa_id_from_join, m.name as mpa_name " + "FROM FILMORATE.FILMS f " + "LEFT JOIN FILMORATE.MPA m ON f.mpa_id = m.id";
+    private static final String SELECT_FILM_WITH_MPA = "SELECT f.id, f.name, f.description, f.release_date, f.duration, " +
+            "f.mpa_id, m.id as mpa_id_from_join, m.name as mpa_name " +
+            "FROM FILMORATE.FILMS f " +
+            "LEFT JOIN FILMORATE.MPA m ON f.mpa_id = m.id";
 
     private static final String SELECT_FILM_WITH_MPA_BY_ID = SELECT_FILM_WITH_MPA + " WHERE f.id = ?";
 
@@ -52,6 +53,11 @@ public class FilmDbStorage implements FilmStorage {
             "GROUP BY f.id, m.id, m.name " +
             "ORDER BY COUNT(fl.user_id) DESC, f.id ASC " +
             "LIMIT ?";
+
+    private static final String GET_ALL_FILMS = "SELECT fg.film_id, g.id AS genre_id, g.name AS genre_name " +
+            "FROM FILMORATE.FILM_GENRES fg " +
+            "JOIN FILMORATE.GENRES g ON fg.genre_id = g.id " +
+            "ORDER BY g.id";
 
     @Override
     public Film addFilm(Film film) {
@@ -78,6 +84,8 @@ public class FilmDbStorage implements FilmStorage {
 
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             addGenresToFilm(film);
+        } else if (film.getGenres() == null) {
+            film.setGenres(new LinkedHashSet<>());
         }
 
         return film;
@@ -85,12 +93,22 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
-        this.jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getDescription(), Date.valueOf(film.getReleaseDate()), film.getDuration(), film.getMpa() != null ? film.getMpa().getId() : null, film.getId());
+        this.jdbcTemplate.update(UPDATE_FILM,
+                film.getName(),
+                film.getDescription(),
+                Date.valueOf(film.getReleaseDate()),
+                film.getDuration(),
+                film.getMpa() != null ? film.getMpa().getId() : null,
+                film.getId());
 
+        // Удаляем старые связи с жанрами
         this.jdbcTemplate.update(DELETE_FILM_GENRES, film.getId());
 
+        // Записываем новые связи
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
             addGenresToFilm(film);
+        } else if (film.getGenres() == null) {
+            film.setGenres(new LinkedHashSet<>()); // Чтобы в ответе отдавать [], а не null
         }
 
         return film;
@@ -104,10 +122,7 @@ public class FilmDbStorage implements FilmStorage {
             return f;
         });
 
-        for (Film film : films) {
-            loadGenresFromResultSet(film);
-        }
-
+        enrichFilmsWithGenres(films);
         return films;
     }
 
@@ -139,10 +154,7 @@ public class FilmDbStorage implements FilmStorage {
             return f;
         }, count);
 
-        for (Film film : films) {
-            loadGenresFromResultSet(film);
-        }
-
+        enrichFilmsWithGenres(films);
         return films;
     }
 
@@ -182,5 +194,30 @@ public class FilmDbStorage implements FilmStorage {
                 .collect(Collectors.toList());
 
         this.jdbcTemplate.batchUpdate(INSERT_FILM_GENRE, batchArgs);
+    }
+
+    private void enrichFilmsWithGenres(List<Film> films) {
+        if (films == null || films.isEmpty()) {
+            return;
+        }
+
+        Map<Long, Set<Genre>> filmGenresMap = jdbcTemplate.query(GET_ALL_FILMS, rs -> {
+            Map<Long, Set<Genre>> map = new HashMap<>();
+            while (rs.next()) {
+                Long filmId = rs.getLong("film_id");
+                Genre genre = new Genre();
+                genre.setId(rs.getInt("genre_id"));
+                genre.setName(rs.getString("genre_name"));
+
+                map.computeIfAbsent(filmId, k -> new LinkedHashSet<>()).add(genre);
+            }
+            return map;
+        });
+
+        for (Film film : films) {
+            film.setGenres(filmGenresMap != null
+                    ? filmGenresMap.getOrDefault(film.getId(), new LinkedHashSet<>())
+                    : new LinkedHashSet<>());
+        }
     }
 }

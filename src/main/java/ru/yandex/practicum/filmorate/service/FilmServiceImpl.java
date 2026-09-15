@@ -4,16 +4,11 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.UserNotFoundException;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +19,7 @@ public class FilmServiceImpl implements FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
     private final MpaStorage mpaStorage;
-    private final GenreStorage genreStorage;
+    private final GenreService genreService;
 
     @Override
     public Film addFilm(Film film) {
@@ -119,16 +114,22 @@ public class FilmServiceImpl implements FilmService {
             log.warn("Film validation failed: MPA is required");
             throw new ValidationException("MPA is required");
         }
-        this.mpaStorage.getMpaById(film.getMpa().getId());
+        int mpaId = film.getMpa().getId();
+        this.mpaStorage.getMpaById(mpaId)
+                .orElseThrow(() -> {
+                    log.warn("MPA not found with ID: {}", mpaId);
+                    return new MpaNotFoundException(mpaId);
+                });
     }
 
     private void validateGenres(Film film) {
         if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            Collection<Integer> genreIds = film.getGenres().stream()
+            List<Integer> genreIds = film.getGenres().stream()
                     .map(Genre::getId)
+                    .distinct()
                     .collect(Collectors.toList());
 
-            this.genreStorage.getGenresByIds(genreIds);
+            this.genreService.getGenres(genreIds);
         }
     }
 }
