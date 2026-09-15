@@ -1,10 +1,3 @@
-DROP TABLE IF EXISTS filmorate.film_genres CASCADE;
-DROP TABLE IF EXISTS filmorate.film_likes CASCADE;
-DROP TABLE IF EXISTS filmorate.friendships CASCADE;
-DROP TABLE IF EXISTS filmorate.films CASCADE;
-DROP TABLE IF EXISTS filmorate.users CASCADE;
-DROP TABLE IF EXISTS filmorate.genres CASCADE;
-DROP TABLE IF EXISTS filmorate.mpa CASCADE;
 
 CREATE SCHEMA IF NOT EXISTS filmorate;
 
@@ -68,3 +61,14 @@ CREATE TABLE IF NOT EXISTS film_genres
     FOREIGN KEY (film_id) REFERENCES films (id) ON DELETE CASCADE,
     FOREIGN KEY (genre_id) REFERENCES genres (id)
 );
+
+DELETE FROM filmorate.film_genres;
+DELETE FROM filmorate.film_likes;
+DELETE FROM filmorate.friendships;
+DELETE FROM filmorate.films;
+DELETE FROM filmorate.users;
+DELETE FROM filmorate.genres;
+DELETE FROM filmorate.mpa;
+
+ALTER TABLE filmorate.films ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE filmorate.users ALTER COLUMN id RESTART WITH 1;
