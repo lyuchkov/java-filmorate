@@ -11,7 +11,7 @@ import java.util.Set;
 public class User {
     private static final String NO_SPACES_REGEX = "^\\S*$";
 
-    long id;
+    Long id;
 
     @Email
     @NotBlank

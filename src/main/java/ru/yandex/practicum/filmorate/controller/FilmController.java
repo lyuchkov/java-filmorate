@@ -28,6 +28,11 @@ public class FilmController {
         return filmService.updateFilm(film);
     }
 
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable long id) {
+        return this.filmService.getFilmById(id);
+    }
+
     @GetMapping
     public List<Film> getAllFilms() {
         log.info("Fetching all films");

@@ -1,12 +1,15 @@
 package ru.yandex.practicum.filmorate;
 
 import jakarta.validation.ValidationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.model.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.model.GenreNotFoundException;
+import ru.yandex.practicum.filmorate.model.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.model.UserNotFoundException;
 
 import java.util.Map;
@@ -20,7 +23,7 @@ public class ErrorHandler {
         return Map.of("error", e.getMessage());
     }
 
-    @ExceptionHandler({UserNotFoundException.class, FilmNotFoundException.class})
+    @ExceptionHandler({UserNotFoundException.class, FilmNotFoundException.class, GenreNotFoundException.class, MpaNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFound(final RuntimeException e) {
         return Map.of("error", e.getMessage());
@@ -37,5 +40,14 @@ public class ErrorHandler {
     public Map<String, String> handleValidationException(final MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getAllErrors().getFirst().getDefaultMessage();
         return Map.of("error", message != null ? message : "Validation failed");
+    }
+
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleDataIntegrityViolation(final DataIntegrityViolationException e) {
+        return Map.of(
+                "error", "key not found"
+        );
     }
 }
